@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoverLink — Web App Prototype</title>
+<style>
+  :root{
+    --primary:#028090; --primary-dark:#01616D; --secondary:#00A896; --accent:#02C39A;
+    --dark:#0B2E33; --darkbg:#07272C; --muted:#5B7A7D; --page-bg:#F3FAF9;
+    --card:#FFFFFF; --line:#E3EFED; --tint:#E7F6F3;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    background:var(--page-bg); color:var(--dark);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  h1,h2,h3,.serif{ font-family:Georgia,"Cambria","Times New Roman",serif; }
+  button{ font-family:inherit; }
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#CFE6E3; border-radius:8px; }
+
+  /* ============ APP SHELL ============ */
+  .app{ display:grid; grid-template-columns:250px 1fr; min-height:100vh; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    background:var(--darkbg); color:#EAF6F4; padding:26px 18px; display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; padding:0 6px 6px; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:9px; flex:none;
+    background:radial-gradient(circle at 35% 30%, var(--accent), var(--primary) 75%);
+  }
+  .brand-name{ font-size:18px; font-weight:700; }
+  .tagline{ font-size:11.5px; color:#8FBBB7; font-style:italic; padding:0 6px 20px; }
+
+  .navlabel{ font-size:10.5px; color:#5F8F8B; font-weight:700; letter-spacing:.4px; margin:14px 6px 8px; text-transform:uppercase; }
+  nav{ display:flex; flex-direction:column; gap:2px; }
+  .navitem{
+    display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:9px; cursor:pointer;
+    border:none; background:none; color:inherit; font:inherit; width:100%; text-align:left;
+    transition:background .15s ease;
+  }
+  .navitem:hover{ background:rgba(255,255,255,0.06); }
+  .navitem.active{ background:var(--primary); }
+  .navitem .ic{ font-size:15px; width:20px; text-align:center; }
+  .navitem .lb{ font-size:13px; color:#DCEFEC; }
+  .navitem.active .lb{ color:#fff; font-weight:600; }
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.09);
+    font-size:10.5px; color:#5F8F8B; line-height:1.6;
+  }
+
+  /* ---------- MAIN ---------- */
+  .main{ display:flex; flex-direction:column; min-width:0; }
+  .topbar{
+    background:#fff; border-bottom:1px solid var(--line); padding:18px 32px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+  }
+  .topbar .titles h1{ margin:0; font-size:21px; font-weight:700; color:var(--dark); }
+  .topbar .titles .sub{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .topbar-right{ display:flex; align-items:center; gap:14px; }
+  .searchbox{
+    display:flex; align-items:center; gap:8px; background:var(--tint); border-radius:10px;
+    padding:8px 14px; font-size:12.5px; color:var(--muted); min-width:220px;
+  }
+  .iconbtn{
+    width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; color:var(--dark);
+    flex:none; position:relative;
+  }
+  .iconbtn .dot{ position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; background:#E0674C; }
+  .avatar{
+    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--secondary), var(--primary));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex:none;
+  }
+
+  .content{ flex:1; padding:28px 32px 48px; max-width:1180px; width:100%; }
+
+  /* ---------- GRID HELPERS ---------- */
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; }
+  .two-col{ display:grid; grid-template-columns:1.4fr 1fr; gap:22px; align-items:start; }
+
+  /* ---------- CARDS ---------- */
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 22px; }
+  .card.tint{ background:var(--tint); border-color:var(--tint); }
+  .card.dark{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .label{ font-size:11.5px; color:var(--muted); margin-bottom:4px; }
+  .value{ font-size:16px; font-weight:700; color:var(--dark); }
+  .value.big{ font-size:26px; }
+  .muted-text{ font-size:12.5px; color:var(--muted); line-height:1.55; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--primary); background:var(--tint); padding:6px 12px; border-radius:20px; }
+  .status-dot{ width:7px; height:7px; border-radius:50%; background:var(--secondary); display:inline-block; }
+
+  .section-title{ font-size:15px; font-weight:700; color:var(--dark); margin:28px 0 14px; }
+  .section-title:first-child{ margin-top:0; }
+  .group-label{ font-size:11px; font-weight:700; color:var(--secondary); text-transform:uppercase; letter-spacing:.4px; margin:20px 0 10px; }
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:11px 20px; border-radius:11px; background:var(--primary); color:#fff; font-weight:600; font-size:13px; border:none; cursor:pointer; transition:background .15s ease; }
+  .btn:hover{ background:var(--primary-dark); }
+  .btn.ghost{ background:#fff; color:var(--primary); border:1px solid var(--primary); }
+  .btn.ghost:hover{ background:var(--tint); }
+  .btn.block{ width:100%; display:flex; }
+  .btn:disabled{ opacity:.6; cursor:default; }
+  .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+
+  .quickgrid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:8px; }
+  .quickcard{
+    background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px; cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  }
+  .quickcard:hover{ border-color:var(--secondary); transform:translateY(-2px); box-shadow:0 10px 24px -14px rgba(2,128,144,0.35); }
+  .quickcard .qi{ font-size:22px; display:block; margin-bottom:10px; }
+  .quickcard .qt{ font-size:13.5px; font-weight:700; color:var(--dark); }
+  .quickcard .qd{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+
+  .idcard{
+    background:linear-gradient(135deg, var(--primary), #015B66); color:#fff; border-radius:18px; padding:28px;
+    position:relative; overflow:hidden; display:flex; gap:28px; align-items:center; justify-content:space-between;
+  }
+  .idcard::after{ content:""; position:absolute; right:-60px; bottom:-70px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,0.07); }
+  .idcard .idlabel{ font-size:11px; color:#BFE7E1; } .idcard .idvalue{ font-size:16px; font-weight:700; margin-top:3px; }
+  .idcard .idfield{ margin-bottom:14px; }
+  .qr{ width:110px; height:110px; border-radius:14px; background:#fff repeating-conic-gradient(var(--dark) 0% 25%, #fff 0% 50%); background-size:14px 14px; border:8px solid #fff; position:relative; z-index:1; flex:none; }
+
+  .accordion-item{ border:1px solid var(--line); border-radius:12px; margin-bottom:9px; overflow:hidden; background:#fff; }
+  .accordion-head{ padding:14px 18px; display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--dark); background:none; border:none; width:100%; font-family:inherit; text-align:left; }
+  .accordion-body{ padding:0 18px 16px; font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .chev{ transition:transform .15s ease; color:var(--secondary); font-size:12px; flex:none; }
+  .chev.open{ transform:rotate(180deg); }
+
+  table.dtable{ width:100%; border-collapse:collapse; }
+  table.dtable td{ padding:11px 0; font-size:13px; border-bottom:1px solid var(--line); }
+  table.dtable tr:last-child td{ border-bottom:none; }
+  table.dtable td.tval{ text-align:right; font-weight:700; color:var(--dark); }
+
+  .offer-card{ display:flex; gap:14px; padding:18px; border:1px solid var(--line); border-radius:14px; align-items:flex-start; background:#fff; }
+  .offer-icon{ width:42px; height:42px; border-radius:11px; background:var(--tint); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none; }
+  .offer-title{ font-size:13.5px; font-weight:700; color:var(--dark); }
+  .offer-desc{ font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45; }
+  .offer-cta{ font-size:11.5px; font-weight:700; color:var(--secondary); margin-top:8px; cursor:pointer; background:none; border:none; padding:0; }
+
+  .gauge-wrap{ display:flex; flex-direction:column; align-items:center; padding:6px 0; }
+  .gauge{ width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; }
+  .gauge::before{ content:""; position:absolute; width:112px; height:112px; border-radius:50%; background:#fff; }
+  .gauge-num{ position:relative; font-size:30px; font-weight:800; color:var(--dark); font-family:Georgia,serif; }
+  .gauge-label{ font-size:12px; color:var(--muted); margin-top:8px; }
+  .stat{ background:var(--tint); border-radius:14px; padding:14px 16px; }
+  .stat .n{ font-size:19px; font-weight:800; color:var(--primary); } .stat .l{ font-size:11.5px; color:var(--muted); margin-top:3px; }
+  .tip{ display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--dark); padding:10px 0; border-bottom:1px solid var(--line); }
+  .tip:last-child{ border-bottom:none; } .tip .n{ color:var(--secondary); font-weight:700; }
+
+  /* claim tracker */
+  .tracker{ display:flex; flex-direction:column; }
+  .step-row{ display:flex; align-items:flex-start; gap:12px; position:relative; padding-bottom:26px; }
+  .step-row:last-child{ padding-bottom:0; }
+  .step-row::before{
+    content:""; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line);
+  }
+  .step-row:last-child::before{ display:none; }
+  .step-row.done::before{ background:var(--secondary); }
+  .step-dot{ width:24px; height:24px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; z-index:1; }
+  .step-dot.done{ background:var(--secondary); color:#fff; }
+  .step-dot.todo{ background:var(--line); color:var(--muted); }
+  .step-text .t1{ font-size:13.5px; color:var(--dark); }
+  .step-text .t1.current{ font-weight:700; }
+  .step-text .t1.todo{ color:var(--muted); }
+  .step-text .t2{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .claim-list-row{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border:1px solid var(--line);
+    border-radius:14px; background:#fff; cursor:pointer; margin-bottom:10px; transition:border-color .12s ease;
+  }
+  .claim-list-row:hover{ border-color:var(--secondary); }
+
+  .garage-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; }
+  .service-tag{ display:inline-block; font-size:11px; background:var(--tint); color:var(--primary); padding:4px 10px; border-radius:20px; margin:0 6px 6px 0; }
+
+  .empty{ font-size:12.5px; color:var(--muted); padding:18px; text-align:center; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1000px){
+    .app{ grid-template-columns:1fr; }
+    .sidebar{ position:static; height:auto; flex-direction:row; align-items:center; overflow-x:auto; padding:14px 16px; gap:0; }
+    .sidebar .brand{ padding:0 10px 0 0; }
+    .tagline, .navlabel, .sidebar-footer{ display:none; }
+    nav{ flex-direction:row; gap:4px; }
+    .navitem{ white-space:nowrap; }
+    .content{ padding:22px 18px 40px; }
+    .topbar{ padding:16px 18px; }
+    .grid-2, .two-col{ grid-template-columns:1fr; }
+    .grid-3{ grid-template-columns:1fr 1fr; }
+    .grid-4{ grid-template-columns:1fr 1fr; }
+    .quickgrid{ grid-template-columns:1fr; }
+    .idcard{ flex-direction:column; align-items:flex-start; }
+  }
+  @media (max-width: 620px){
+    .grid-3, .grid-4{ grid-template-columns:1fr; }
+    .searchbox{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">CoverLink</div>
+    </div>
+    <div class="tagline">Every policy. One tap away.</div>
+
+    <div class="navlabel">Modules</div>
+    <nav id="nav"></nav>
+
+    <div class="sidebar-footer">
+      Web app prototype · CoverLink v0.3<br>
+      Static demo — data resets on reload.
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div class="titles">
+        <h1 id="pageTitle">Home</h1>
+        <div class="sub" id="pageSub">Good afternoon</div>
+      </div>
+      <div class="topbar-right">
+        <div class="searchbox">🔍 Search policies, claims, garages…</div>
+        <button class="iconbtn" title="Notifications">🔔<span class="dot"></span></button>
+        <div class="avatar">AK</div>
+      </div>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<script>
+// ======================= DATA =======================
+const PROFILE = { greetingName: "Alex", initials: "AK" };
+
+const POLICIES = [
+  {
+    id: "CL-204817", type: "auto", label: "Vehicle coverage", vehicle: "2022 Sedan Cross L 4dr AWD",
+    status: "Active", renewsOn: "Jan 03, 2027",
+    groups: [
+      { group: "Coverage for all vehicles", items: [
+        { name: "Accident benefits", detail: "Limit $2,000 · Death/dismemberment $10,000/occurrence · Medical fees $2,000/occurrence." },
+        { name: "Additional travel benefits", detail: "Alternative transportation $5,000/occurrence · Accommodation extension $1,500/occurrence · Liability for non-owned autos $100,000 · Emergency towing $100/occurrence." },
+      ]},
+      { group: "Coverage for this vehicle only", items: [
+        { name: "Liability", detail: "Limit $1,000,000." },
+        { name: "Collision and upset", detail: "Deductible $1,000." },
+        { name: "All perils other than collision or upset", detail: "Deductible $1,000." },
+        { name: "Lienholder protection", detail: "Included." },
+        { name: "Increased indemnity for used vehicles", detail: "Vehicle value $29,000 · Premium $171.00/yr — removes depreciation on a total loss, so a payout matches what you paid rather than today's depreciated value." },
+      ]},
+    ],
+  },
+  {
+    id: "CL-118820", type: "home", label: "Home coverage", vehicle: null,
+    status: "Active", renewsOn: "Mar 02, 2027",
+    groups: [
+      { group: "Coverage for your home", items: [
+        { name: "Dwelling", detail: "Covers the structure of your home up to its rebuild value." },
+        { name: "Personal property", detail: "Covers belongings inside the home against covered losses." },
+      ]},
+    ],
+  },
+];
+
+const BILLING = {
+  totalAmountDue: 2829.20, annualPremium: 2526.00, taxes: 227.42, fees: 75.78, remainingBalance: 1089.48,
+  nextPaymentAmount: 142.50, nextPaymentDate: "Sep 14, 2026", paymentType: "Monthly", last4: "7749",
+};
+
+const PROOF = {
+  policyHolder: "Alex Karenzi", vehicle: "2022 Sedan Cross L 4dr AWD", policyId: "CL-204817",
+  status: "Active — valid through renewal",
+};
+
+const GARAGES = [
+  { id: "g1", name: "Fix Auto Downtown Centre", address: "812 Maple Ave, Kigali", phone: "+250 788 000 111", distanceKm: 2.4, rating: 4.7, directBilling: true, services: ["Collision repair", "Glass replacement", "Courtesy car"] },
+  { id: "g2", name: "Precision Auto Body", address: "45 Nyarutarama Rd, Kigali", phone: "+250 788 000 222", distanceKm: 5.1, rating: 4.5, directBilling: true, services: ["Collision repair", "Paint & bodywork"] },
+  { id: "g3", name: "CarCare Express", address: "17 Kacyiru Blvd, Kigali", phone: "+250 788 000 333", distanceKm: 7.8, rating: 4.3, directBilling: false, services: ["Mechanical repair", "Diagnostics"] },
+];
+
+const CLAIM_STEPS = ["Claim Opened", "Damage Evaluation", "Repair in Progress", "Vehicle Ready", "Claim Closed"];
+const CLAIMS = [
+  { id: "051002234", vehicle: "2022 Sedan Cross L 4dr AWD", incidentDate: "Aug 20, 2026", stepIndex: 2, garage: GARAGES[0], closingNote: null },
+  { id: "045316357", vehicle: "2022 Sedan Cross L 4dr AWD", incidentDate: "May 28, 2026", stepIndex: 4, garage: GARAGES[0], closingNote: "We hope your experience with us was a positive one. If you have any further questions, please contact support." },
+  { id: "044453976", vehicle: "Compact Sedan 1.8 S 4dr, 2014", incidentDate: "Nov 02, 2025", stepIndex: 4, garage: GARAGES[1], closingNote: "Repairs were completed and your vehicle was returned on schedule." },
+];
+
+const SMARTDRIVE = {
+  safetyScore: 87, monthDistanceKm: 412, tripCount: 6, projectedDiscountPct: 25,
+  tips: [
+    "Ease off the brake earlier — 3 hard-braking events this week.",
+    "Your smoothest driving is between 7–9am. Keep it up.",
+    "Try to avoid phone handling while driving to boost your focus score.",
+  ],
+};
+
+const FAQS = [
+  { q: "What does collision cover?", a: "Repairs to your vehicle after a collision with another car or object, regardless of fault, up to your policy limit." },
+  { q: "Is a cracked windshield covered?", a: "Yes, under comprehensive coverage. Many glass repairs carry a reduced or waived deductible." },
+  { q: "Am I covered if I lend my car to a friend?", a: "Generally yes, if they have your permission and are listed as an occasional driver where required." },
+  { q: "What's excluded from comprehensive?", a: "Normal wear and tear, mechanical breakdown, and driving under the influence are not covered." },
+  { q: "How does the garage network work?", a: "Drop your car at any partner garage — repairs are billed directly to CoverLink, so in most cases you only pay your deductible." },
+];
+
+const OFFERS = [
+  { icon: "🎁", title: "Bundle auto + home", desc: "Save an estimated 12% when you cover both under CoverLink.", cta: "See my savings" },
+  { icon: "🚗", title: "SmartDrive renewal discount", desc: "Keep your safety score above 80 to unlock up to 25% off at renewal.", cta: "View my score" },
+  { icon: "👥", title: "Refer a friend", desc: "You both get a $25 statement credit when they activate a policy.", cta: "Send an invite" },
+  { icon: "🔧", title: "Preferred repair network", desc: "Get a lifetime workmanship guarantee at partner auto shops.", cta: "Find a shop" },
+];
+
+// ======================= NAV / TITLES =======================
+const MODULES = [
+  { id: "home", label: "Home", icon: "🏠" },
+  { id: "proof", label: "Proof of Insurance", icon: "📄" },
+  { id: "billing", label: "Billing & Payments", icon: "💳" },
+  { id: "coverage", label: "My Coverage", icon: "🛡" },
+  { id: "assistance", label: "Assistance", icon: "🆘" },
+  { id: "claims", label: "Track My Claim", icon: "📋" },
+  { id: "garages", label: "Garage Network", icon: "🔧" },
+  { id: "smartdrive", label: "SmartDrive", icon: "🚗" },
+  { id: "covered", label: "What's Covered", icon: "📘" },
+  { id: "offers", label: "Offers & Rewards", icon: "🎁" },
+];
+const TITLES = {
+  home: "Home", proof: "Proof of Insurance", billing: "My Billing", coverage: "My Coverage",
+  assistance: "Assistance", claims: "Track My Claim", claimDetail: "Claim Details",
+  garages: "Garage Network", smartdrive: "SmartDrive", covered: "What's Covered", offers: "Offers & Rewards",
+};
+const SUBS = {
+  home: "Good afternoon, Alex — here's where things stand today.", proof: "Auto · Policy #CL-204817",
+  billing: "Payment up to date", coverage: "2 active policies", assistance: "We're here 24/7",
+  claims: "Active & previous claims", claimDetail: "Step-by-step progress", garages: "Partner repair shops",
+  smartdrive: "This month's driving", covered: "Auto policy CL-204817", offers: "Curated for you",
+};
+
+// ======================= STATE =======================
+let current = "home";
+let currentClaimId = null;
+let openAccordionKey = null;
+
+// ======================= SCREEN RENDERERS =======================
+function screenHome(){
+  return `
+    <div class="quickgrid">
+      <div class="quickcard" onclick="showScreen('claims')"><span class="qi">🆘</span><div class="qt">Start a claim</div><div class="qd">File a new claim in minutes</div></div>
+      <div class="quickcard" onclick="showScreen('coverage')"><span class="qi">🛡</span><div class="qt">View coverage</div><div class="qd">See every policy at a glance</div></div>
+      <div class="quickcard" onclick="showScreen('proof')"><span class="qi">📄</span><div class="qt">Proof of Insurance</div><div class="qd">Your digital ID card</div></div>
+    </div>
+
+    <div class="two-col" style="margin-top:22px;">
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="label">${POLICIES[0].label}</div>
+            <div class="value" style="font-size:18px;">${POLICIES[0].vehicle}</div>
+            <div class="muted-text" style="margin-top:4px;">Policy #${POLICIES[0].id} · Renews ${POLICIES[0].renewsOn}</div>
+          </div>
+          <span class="pill"><span class="status-dot"></span>Active</span>
+        </div>
+      </div>
+      <div class="card tint">
+        <div class="label">Next payment</div>
+        <div class="value big">$${BILLING.nextPaymentAmount.toFixed(2)}</div>
+        <div class="muted-text" style="margin-top:2px;">Due ${BILLING.nextPaymentDate}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Garage network</div>
+    <div class="card" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;" onclick="showScreen('garages')">
+      <div>
+        <div class="value" style="font-size:14px;">🔧 Find a partner garage</div>
+        <div class="muted-text" style="margin-top:4px;">Direct billing at repair shops that work with CoverLink.</div>
+      </div>
+      <span class="btn ghost">Browse garages</span>
+    </div>
+
+    <div class="section-title">Learning centre</div>
+    <div class="card">
+      <div class="value" style="font-size:14px;">Is your teen driving this year?</div>
+      <div class="muted-text" style="margin-top:4px;">See how adding a driver could affect your premium.</div>
+      <button class="offer-cta" style="margin-top:10px;">Learn more →</button>
+    </div>
+  `;
+}
+
+function screenProof(){
+  const d = PROOF;
+  return `
+    <div class="idcard">
+      <div>
+        <div class="idfield"><div class="idlabel">POLICY HOLDER</div><div class="idvalue">${d.policyHolder}</div></div>
+        <div class="idfield"><div class="idlabel">VEHICLE</div><div class="idvalue">${d.vehicle} · POLICY #${d.policyId}</div></div>
+        <div><div class="idlabel">STATUS</div><div class="idvalue">${d.status}</div></div>
+      </div>
+      <div class="qr"></div>
+    </div>
+    <div class="btnrow" style="margin-top:20px;">
+      <button class="btn">Share as PDF</button>
+      <button class="btn ghost">Add to Wallet</button>
+    </div>
+    <div class="muted-text" style="margin-top:14px;">Cached on this device — opens even without signal.</div>
+  `;
+}
+
+function screenBilling(){
+  const b = BILLING;
+  const money = n => `$${n.toFixed(2)}`;
+  return `
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">Payment details</div>
+        <table class="dtable">
+          <tr><td>Total amount due</td><td class="tval">${money(b.totalAmountDue)}</td></tr>
+          <tr><td>Annual premium</td><td class="tval">${money(b.annualPremium)}</td></tr>
+          <tr><td>Taxes</td><td class="tval">${money(b.taxes)}</td></tr>
+          <tr><td>Fees</td><td class="tval">${money(b.fees)}</td></tr>
+          <tr><td>Remaining balance</td><td class="tval" style="color:var(--primary);">${money(b.remainingBalance)}</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="card tint" style="margin-bottom:16px;">
+          <div class="label">Next payment</div>
+          <div class="value big">${money(b.nextPaymentAmount)}</div>
+          <div class="muted-text" style="margin-top:2px;">To be processed ${b.nextPaymentDate}</div>
+        </div>
+        <div class="grid-2">
+          <div class="stat"><div class="n">${b.paymentType}</div><div class="l">Payment type</div></div>
+          <div class="stat"><div class="n">•••• ${b.last4}</div><div class="l">Auto-pay card</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="btnrow" style="margin-top:20px;">
+      <button class="btn ghost">Manage billing</button>
+      <button class="btn ghost">View billing history</button>
+    </div>
+  `;
+}
+
+function screenCoverage(){
+  const auto = POLICIES.find(p => p.type === "auto");
+  const policyCards = `
+    <div class="grid-2">
+      ${POLICIES.map(p => `
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="value">${p.type === "auto" ? "🚗" : "🏠"} ${p.label}</div>
+              <div class="muted-text" style="margin-top:4px;">${p.vehicle ? p.vehicle + " · " : ""}Policy #${p.id}</div>
+            </div>
+            <span class="pill"><span class="status-dot"></span>Active</span>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  const groupsHtml = auto.groups.map(group => `
+    <div class="group-label">${group.group}</div>
+    ${group.items.map(item => {
+      const key = group.group + "::" + item.name;
+      const open = openAccordionKey === key;
+      return `
+        <div class="accordion-item">
+          <button class="accordion-head" onclick="toggleAccordion('${key.replace(/'/g, "\\'")}')">
+            <span>${item.name}</span><span class="chev ${open ? "open" : ""}">⌄</span>
+          </button>
+          ${open ? `<div class="accordion-body">${item.detail}</div>` : ""}
+        </div>
+      `;
+    }).join("")}
+  `).join("");
+
+  return `
+    ${policyCards}
+    <div class="card tint" style="cursor:pointer; margin-top:16px; display:flex; align-items:center; justify-content:space-between;" onclick="showScreen('garages')">
+      <div>
+        <div class="value" style="font-size:14px;">🔧 Bundle both policies</div>
+        <div class="muted-text" style="margin-top:4px;">You could save an estimated 12% by bundling auto and home.</div>
+      </div>
+      <span class="btn ghost">See savings</span>
+    </div>
+    ${groupsHtml}
+  `;
+}
+
+function screenAssistance(){
+  return `
+    <div class="card dark" style="display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+      <div>
+        <div class="value" style="color:#fff; font-size:16px;">Need help right now?</div>
+        <div class="muted-text" style="color:#CFEDE9; margin-top:4px;">Roadside assistance is one tap away, 24 hours a day.</div>
+      </div>
+      <button class="btn ghost" style="background:#fff; color:var(--primary);">Call roadside assistance</button>
+    </div>
+
+    <div class="grid-3" style="margin-top:22px;">
+      <div class="quickcard" onclick="showScreen('claims')"><span class="qi">📋</span><div class="qt">Track my claim</div><div class="qd">Live step-by-step status</div></div>
+      <div class="quickcard" onclick="showScreen('claims')"><span class="qi">🆘</span><div class="qt">Start a claim</div><div class="qd">File a new claim</div></div>
+      <div class="quickcard" onclick="showScreen('garages')"><span class="qi">🔧</span><div class="qt">Find a garage</div><div class="qd">Preferred repair network</div></div>
+    </div>
+
+    <div class="section-title">Support</div>
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="muted-text">Chat with a live agent, any time.</div>
+      <button class="btn ghost">Chat with an agent</button>
+    </div>
+  `;
+}
+
+function screenClaims(){
+  const active = CLAIMS.filter(c => c.stepIndex < CLAIM_STEPS.length - 1);
+  const previous = CLAIMS.filter(c => c.stepIndex >= CLAIM_STEPS.length - 1);
+  const row = c => `
+    <div class="claim-list-row" onclick="openClaim('${c.id}')">
+      <div>
+        <div class="value" style="font-size:13.5px;">${CLAIM_STEPS[c.stepIndex]}</div>
+        <div class="muted-text" style="margin-top:3px;">${c.vehicle} · Auto claim #${c.id} · Incident ${c.incidentDate}</div>
+      </div>
+      <span style="color:var(--secondary); font-size:18px;">›</span>
+    </div>
+  `;
+  return `
+    <div class="section-title" style="margin-top:0;">Active claims</div>
+    ${active.length ? active.map(row).join("") : `<div class="card empty">No active claims.</div>`}
+    <div class="section-title">Previous claims</div>
+    ${previous.map(row).join("")}
+    <div class="card tint" style="margin-top:6px;">
+      <div class="muted-text">We show home and auto claims from the past 7 years. Don't see a claim you're looking for? Contact support for help.</div>
+    </div>
+  `;
+}
+
+function screenClaimDetail(){
+  const claim = CLAIMS.find(c => c.id === currentClaimId);
+  if (!claim) return `<div class="muted-text">No claim selected.</div>`;
+  const isClosed = claim.stepIndex >= CLAIM_STEPS.length - 1;
+  const inRepair = claim.stepIndex >= 2;
+
+  const steps = CLAIM_STEPS.map((step, i) => {
+    const done = i <= claim.stepIndex;
+    const iscurrent = i === claim.stepIndex;
+    return `
+      <div class="step-row ${done ? "done" : ""}">
+        <div class="step-dot ${done ? "done" : "todo"}">${done ? "✓" : i + 1}</div>
+        <div class="step-text">
+          <div class="t1 ${iscurrent ? "current" : ""} ${!done ? "todo" : ""}">${step}</div>
+          ${iscurrent ? `<div class="t2">Current status</div>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="card dark" style="margin-bottom:20px;">
+      <div class="value" style="color:#fff; font-size:16px;">${claim.vehicle}</div>
+      <div class="muted-text" style="color:#CFEDE9; margin-top:4px;">Auto claim #${claim.id} · Incident ${claim.incidentDate}</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">Step ${claim.stepIndex + 1} of ${CLAIM_STEPS.length} — ${CLAIM_STEPS[claim.stepIndex]}</div>
+        <div class="tracker">${steps}</div>
+      </div>
+      <div>
+        ${inRepair && claim.garage ? `
+          <div class="card" style="margin-bottom:16px;">
+            <div class="label">Your car is at</div>
+            <div class="value" style="font-size:14px; margin-top:2px;">🔧 ${claim.garage.name}</div>
+            <div class="muted-text" style="margin-top:6px;">${claim.garage.address}</div>
+            <div class="muted-text">${claim.garage.phone}</div>
+            ${claim.garage.directBilling ? `<div class="pill" style="margin-top:10px;">Direct billing — pay only your deductible</div>` : ""}
+          </div>
+        ` : ""}
+        ${isClosed ? `
+          <div class="card tint">
+            <div class="value" style="font-size:14px;">Claim closed</div>
+            <div class="muted-text" style="margin-top:6px;">${claim.closingNote}</div>
+          </div>
+        ` : `
+          <button class="btn block" onclick="advanceClaim('${claim.id}')">Simulate next step →</button>
+        `}
+      </div>
+    </div>
+    <button class="btn ghost" style="margin-top:20px;" onclick="showScreen('claims')">← Back to all claims</button>
+  `;
+}
+
+function screenGarages(){
+  return `
+    <div class="card tint" style="margin-bottom:20px;">
+      <div class="value" style="font-size:14px;">Preferred garage network</div>
+      <div class="muted-text" style="margin-top:5px;">Drop your car at any partner garage below — repairs are billed directly to CoverLink, so in most cases you only pay your deductible.</div>
+    </div>
+    <div class="grid-3">
+      ${GARAGES.map(g => `
+        <div class="garage-card">
+          <div class="row">
+            <div class="value" style="font-size:14px;">${g.name}</div>
+            <span class="pill">★ ${g.rating}</span>
+          </div>
+          <div class="muted-text" style="margin-top:8px;">${g.address}</div>
+          <div class="muted-text">${g.phone} · ${g.distanceKm} km away</div>
+          <div style="margin-top:10px;">${g.services.map(s => `<span class="service-tag">${s}</span>`).join("")}</div>
+          ${g.directBilling
+            ? `<div class="muted-text" style="margin-top:10px; color:var(--secondary); font-weight:700;">✓ Direct billing partner</div>`
+            : `<div class="muted-text" style="margin-top:10px;">Reimbursement claim required</div>`}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function screenSmartDrive(){
+  const sd = SMARTDRIVE;
+  const gaugeStyle = `background: conic-gradient(var(--accent) 0% ${sd.safetyScore}%, #E5F1EF ${sd.safetyScore}% 100%);`;
+  return `
+    <div class="two-col">
+      <div class="card" style="text-align:center;">
+        <div class="gauge-wrap">
+          <div class="gauge" style="${gaugeStyle}"><div class="gauge-num">${sd.safetyScore}</div></div>
+          <div class="gauge-label">Safety score this month</div>
+        </div>
+        <div class="grid-2" style="margin-top:16px; text-align:left;">
+          <div class="stat"><div class="n">${sd.monthDistanceKm} km</div><div class="l">Tracked this month</div></div>
+          <div class="stat"><div class="n">${sd.tripCount} trips</div><div class="l">Recorded</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card tint" style="margin-bottom:16px;">
+          <div class="label">Projected renewal discount</div>
+          <div class="value big" style="color:var(--primary);">Up to ${sd.projectedDiscountPct}%</div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-top:0;">Driving tips</div>
+          ${sd.tips.map((t, i) => `<div class="tip"><span class="n">${i+1}.</span> ${t}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function screenCovered(){
+  return `
+    ${FAQS.map((f, i) => {
+      const open = openAccordionKey === "faq::" + i;
+      return `
+        <div class="accordion-item">
+          <button class="accordion-head" onclick="toggleAccordion('faq::${i}')">
+            <span>${f.q}</span><span class="chev ${open ? "open" : ""}">⌄</span>
+          </button>
+          ${open ? `<div class="accordion-body">${f.a}</div>` : ""}
+        </div>
+      `;
+    }).join("")}
+    <div class="card" style="margin-top:16px; display:flex; align-items:center; justify-content:space-between;">
+      <div class="muted-text">Still have questions?</div>
+      <button class="btn ghost">Chat with an agent</button>
+    </div>
+  `;
+}
+
+function screenOffers(){
+  return `<div class="grid-2">${OFFERS.map(o => `
+    <div class="offer-card">
+      <div class="offer-icon">${o.icon}</div>
+      <div>
+        <div class="offer-title">${o.title}</div>
+        <div class="offer-desc">${o.desc}</div>
+        <button class="offer-cta">${o.cta} →</button>
+      </div>
+    </div>
+  `).join("")}</div>`;
+}
+
+const SCREENS = {
+  home: screenHome, proof: screenProof, billing: screenBilling, coverage: screenCoverage,
+  assistance: screenAssistance, claims: screenClaims, claimDetail: screenClaimDetail,
+  garages: screenGarages, smartdrive: screenSmartDrive, covered: screenCovered, offers: screenOffers,
+};
+
+// ======================= NAV / RENDER =======================
+function renderNav(){
+  const nav = document.getElementById("nav");
+  nav.innerHTML = MODULES.map(m => `
+    <button class="navitem ${current === m.id ? "active" : ""}" onclick="showScreen('${m.id}')">
+      <span class="ic">${m.icon}</span><span class="lb">${m.label}</span>
+    </button>
+  `).join("");
+}
+
+function showScreen(id){
+  current = id;
+  openAccordionKey = null;
+  document.getElementById("content").innerHTML = SCREENS[id] ? SCREENS[id]() : "";
+  document.getElementById("pageTitle").textContent = TITLES[id] || "CoverLink";
+  document.getElementById("pageSub").textContent = SUBS[id] || "";
+  renderNav();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function openClaim(id){
+  currentClaimId = id;
+  showScreen("claimDetail");
+}
+
+function advanceClaim(id){
+  const claim = CLAIMS.find(c => c.id === id);
+  if (claim && claim.stepIndex < CLAIM_STEPS.length - 1) {
+    claim.stepIndex += 1;
+    if (claim.stepIndex === CLAIM_STEPS.length - 1) {
+      claim.closingNote = "We hope your experience with us was a positive one. If you have any further questions, please contact support.";
+    }
+  }
+  showScreen("claimDetail");
+}
+
+function toggleAccordion(key){
+  openAccordionKey = openAccordionKey === key ? null : key;
+  document.getElementById("content").innerHTML = SCREENS[current]();
+}
+
+document.getElementById("avatarInit") && (document.getElementById("avatarInit").textContent = PROFILE.initials);
+document.querySelector(".avatar").textContent = PROFILE.initials;
+
+showScreen("home");
+</script>
+</body>
+</html>
